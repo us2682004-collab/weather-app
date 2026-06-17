@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather Dashboard Pro</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#3b82f6,#7c3aed);
+min-height:100vh;
+padding:20px;
+color:white;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+}
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+gap:10px;
+margin-bottom:20px;
+}
+
+.search-box{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+}
+
+.search-box input{
+padding:12px;
+border:none;
+border-radius:10px;
+width:250px;
+outline:none;
+}
+
+.search-box button{
+padding:12px 18px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:white;
+font-weight:bold;
+}
+
+.card{
+background:rgba(255,255,255,0.12);
+backdrop-filter:blur(15px);
+border-radius:20px;
+padding:20px;
+box-shadow:0 8px 20px rgba(0,0,0,.2);
+}
+
+.main-weather{
+display:grid;
+grid-template-columns:2fr 1fr;
+gap:20px;
+margin-bottom:20px;
+}
+
+.temp{
+font-size:70px;
+font-weight:600;
+}
+
+.weather-icon{
+width:100px;
+height:100px;
+}
+
+.details{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:15px;
+margin-bottom:20px;
+}
+
+.detail-card{
+background:rgba(255,255,255,.15);
+padding:20px;
+border-radius:15px;
+text-align:center;
+}
+
+.forecast{
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:15px;
+}
+
+.forecast-card{
+background:rgba(255,255,255,.15);
+padding:15px;
+border-radius:15px;
+text-align:center;
+}
+
+@media(max-width:768px){
+
+.main-weather{
+grid-template-columns:1fr;
+}
+
+.details{
+grid-template-columns:repeat(2,1fr);
+}
+
+.forecast{
+grid-template-columns:repeat(2,1fr);
+}
+
+.search-box input{
+width:180px;
+}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+<h1>🌦️ Weather Dashboard Pro</h1>
+
+<div class="search-box">
+<input type="text" id="city" placeholder="Enter City Name">
+<button onclick="getWeather()">Search</button>
+<button onclick="getCurrentLocation()">📍 Location</button>
+</div>
+</div>
+
+<div class="main-weather">
+
+<div class="card">
+<h2 id="cityName">Delhi, IN</h2>
+
+<img id="icon"
+class="weather-icon"
+src="https://openweathermap.org/img/wn/01d@2x.png">
+
+<h1 class="temp" id="temp">--°C</h1>
+
+<p id="condition">Weather Loading...</p>
+</div>
+
+<div class="card">
+<h3>Today's Highlights</h3>
+<br>
+<p>Feels Like: <span id="feels">--°C</span></p>
+<br>
+<p>Visibility: <span id="visibility">-- km</span></p>
+</div>
+
+</div>
+
+<div class="details">
+
+<div class="detail-card">
+<h3>💧 Humidity</h3>
+<p id="humidity">--%</p>
+</div>
+
+<div class="detail-card">
+<h3>💨 Wind</h3>
+<p id="wind">-- km/h</p>
+</div>
+
+<div class="detail-card">
+<h3>🌡️ Pressure</h3>
+<p id="pressure">-- hPa</p>
+</div>
+
+<div class="detail-card">
+<h3> ☀️Sunrise</h3>
+<p id="sunrise">--</p>
+</div>
+
+</div>
+
+<h2 style="margin-bottom:15px;">5-Day Forecast</h2>
+
+<div class="forecast" id="forecast">
+</div>
+
+</div>
+
+<script>
+
+const API_KEY = "64591ec011ce983abc795e67187cacd7";
+
+async function getWeather(cityName=null){
+
+const city = cityName || document.getElementById("city").value.trim();
+
+if(city===""){
+alert("Please Enter City Name");
+return;
+}
+
+try{
+
+const response = await fetch(
+`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`
+);
+
+const data = await response.json();
+
+if(data.cod != 200){
+alert("City Not Found");
+return;
+}
+
+updateUI(data);
+
+getForecast(city);
+
+}catch(error){
+console.log(error);
+alert("Error Fetching Weather");
+}
+}
+
+function updateUI(data){
+
+document.getElementById("cityName").innerText =
+`${data.name}, ${data.sys.country}`;
+
+document.getElementById("temp").innerText =
+Math.round(data.main.temp)+"°C";
+
+document.getElementById("condition").innerText =
+data.weather[0].description;
+
+document.getElementById("humidity").innerText =
+data.main.humidity+"%";
+
+document.getElementById("wind").innerText =
+data.wind.speed+" km/h";
+
+document.getElementById("pressure").innerText =
+data.main.pressure+" hPa";
+
+document.getElementById("feels").innerText =
+Math.round(data.main.feels_like)+"°C";
+
+document.getElementById("visibility").innerText =
+(data.visibility/1000)+" km";
+
+const sunrise = new Date(data.sys.sunrise*1000);
+
+document.getElementById("sunrise").innerText =
+sunrise.toLocaleTimeString();
+
+document.getElementById("icon").src =
+`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+}
+
+async function getForecast(city){
+
+try{
+
+const response = await fetch(
+`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${API_KEY}`
+);
+
+const data = await response.json();
+
+const forecastDiv =
+document.getElementById("forecast");
+
+forecastDiv.innerHTML="";
+
+for(let i=0;i<5;i++){
+
+const item=data.list[i*8];
+
+const date=new Date(item.dt*1000);
+
+forecastDiv.innerHTML+=`
+<div class="forecast-card">
+${date.toLocaleDateString('en-US',{weekday:'short'})}
+<br><br>
+<img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png">
+<br>
+${Math.round(item.main.temp)}°C
+</div>`;
+}
+
+}catch(error){
+console.log(error);
+}
+}
+
+function getCurrentLocation(){
+
+navigator.geolocation.getCurrentPosition(
+async(position)=>{
+
+const lat=position.coords.latitude;
+const lon=position.coords.longitude;
+
+const response=await fetch(
+`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`
+);
+
+const data=await response.json();
+
+updateUI(data);
+
+getForecast(data.name);
+
+});
+}
+
+document.getElementById("city")
+.addEventListener("keypress",function(e){
+
+if(e.key==="Enter"){
+getWeather();
+}
+
+});
+
+window.onload=()=>{
+getWeather("Delhi");
+};
+
+</script>
+
+</body>
+</html>
